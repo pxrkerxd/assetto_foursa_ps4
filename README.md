@@ -10,7 +10,7 @@ An end-to-end Full Stack + AI-powered customer review management platform design
 - Parijat – Backend Development
 - Shridhar – AI Integration
 - Siddhesh – Data & Presentation
-- Sahil – Frontend Development
+- Sahilkumar – Frontend Development
 
 ---
 
