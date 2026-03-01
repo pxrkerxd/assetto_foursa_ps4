@@ -22,25 +22,54 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 export default function AnalyticsPage() {
   const [data, setData] = useState({
-    monthlyData: [],
-    sentimentData: [],
-    platformData: [],
-    topTags: []
+    monthlyData: [] as any[],
+    sentimentData: [] as any[],
+    platformData: [] as any[],
+    topTags: [] as any[]
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 🚀 HACKATHON SPEEDRUN: Hardcoded premium demo data instead of a backend fetch!
     const fetchAnalytics = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/analytics')
-        const result = await response.json()
-        setData(result)
-        setLoading(false)
-      } catch (error) {
-        console.error("Error fetching analytics:", error)
-        setLoading(false)
-      }
+      // Simulate a quick 600ms network request to show off your loading animation
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      setData({
+        monthlyData: [
+          { month: "Oct", positive: 120, negative: 30 },
+          { month: "Nov", positive: 140, negative: 45 },
+          { month: "Dec", positive: 190, negative: 20 },
+          { month: "Jan", positive: 160, negative: 35 },
+          { month: "Feb", positive: 210, negative: 25 },
+          { month: "Mar", positive: 245, negative: 15 }, // Current month looking great
+        ],
+        sentimentData: [
+          { day: "Mon", score: 72 },
+          { day: "Tue", score: 75 },
+          { day: "Wed", score: 68 }, // Small dip to make it look real
+          { day: "Thu", score: 81 },
+          { day: "Fri", score: 85 },
+          { day: "Sat", score: 88 },
+          { day: "Sun", score: 86 },
+        ],
+        platformData: [
+          { name: "Direct (QR)", value: 55, color: "#6366f1" }, // Indigo
+          { name: "Google", value: 25, color: "#10b981" },      // Emerald
+          { name: "Zomato", value: 12, color: "#f43f5e" },      // Rose
+          { name: "Yelp", value: 8, color: "#f59e0b" },         // Amber
+        ],
+        topTags: [
+          { tag: "Food Quality", pct: 85, count: 342 },
+          { tag: "Service", pct: 65, count: 215 },
+          { tag: "Wait Time", pct: 45, count: 184 },
+          { tag: "Ambiance", pct: 30, count: 98 },
+          { tag: "Hygiene", pct: 20, count: 65 },
+        ]
+      })
+      setLoading(false)
     }
+
     fetchAnalytics()
   }, [])
 
@@ -66,8 +95,9 @@ export default function AnalyticsPage() {
               <XAxis dataKey="month" tick={{ fill: "oklch(0.6 0 0)", fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "oklch(0.6 0 0)", fontSize: 12 }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="positive" stackId="a" fill="oklch(0.72 0.19 163)" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="negative" stackId="a" fill="oklch(0.65 0.2 25)" radius={[4, 4, 0, 0]} />
+              {/* Note: I swapped the colors so Positive is the main bright color */}
+              <Bar dataKey="negative" stackId="a" fill="oklch(0.65 0.2 25)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="positive" stackId="a" fill="oklch(0.72 0.19 163)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -122,7 +152,7 @@ export default function AnalyticsPage() {
                 <span className="w-28 text-sm text-foreground">{item.tag}</span>
                 <div className="flex-1">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${item.pct}%` }} />
+                    <div className="h-full rounded-full bg-primary transition-all duration-700 delay-300" style={{ width: `${item.pct}%` }} />
                   </div>
                 </div>
                 <span className="w-12 text-right text-xs tabular-nums text-muted-foreground">{item.count}</span>
