@@ -58,8 +58,7 @@ This system transforms raw customer reviews into actionable intelligence using a
 
 ## ⚙️ How to Run Locally
 
-### 1️⃣ Clone the Repository
-```bash
+1️⃣ Clone the Repository
 git clone [https://github.com/pxrkerxd/assetto_foursa_ps4.git](https://github.com/pxrkerxd/assetto_foursa_ps4.git)
 cd assetto_foursa_ps4
 2️⃣ Backend Setup (Terminal 1)
