@@ -1,32 +1,8 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard-shell"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts"
-
-const monthlyData = [
-  { month: "Aug", reviews: 320, positive: 248, negative: 72 },
-  { month: "Sep", reviews: 380, positive: 298, negative: 82 },
-  { month: "Oct", reviews: 410, positive: 328, negative: 82 },
-  { month: "Nov", reviews: 445, positive: 365, negative: 80 },
-  { month: "Dec", reviews: 520, positive: 436, negative: 84 },
-  { month: "Jan", reviews: 485, positive: 402, negative: 83 },
-  { month: "Feb", reviews: 287, positive: 238, negative: 49 },
-]
-
-const sentimentData = [
-  { day: "Mon", score: 72 },
-  { day: "Tue", score: 75 },
-  { day: "Wed", score: 68 },
-  { day: "Thu", score: 80 },
-  { day: "Fri", score: 78 },
-  { day: "Sat", score: 85 },
-  { day: "Sun", score: 82 },
-]
-
-const platformData = [
-  { name: "Google", value: 58, color: "oklch(0.72 0.19 163)" },
-  { name: "Zomato", value: 42, color: "oklch(0.65 0.2 25)" },
-]
 
 const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) => {
   if (active && payload && payload.length) {
@@ -45,6 +21,39 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function AnalyticsPage() {
+  const [data, setData] = useState({
+    monthlyData: [],
+    sentimentData: [],
+    platformData: [],
+    topTags: []
+  })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/analytics')
+        const result = await response.json()
+        setData(result)
+        setLoading(false)
+      } catch (error) {
+        console.error("Error fetching analytics:", error)
+        setLoading(false)
+      }
+    }
+    fetchAnalytics()
+  }, [])
+
+  if (loading) {
+    return (
+      <DashboardShell title="Analytics" subtitle="Deep dive into review trends and sentiment patterns">
+        <div className="flex h-[60vh] items-center justify-center">
+          <p className="text-muted-foreground animate-pulse">Loading analytics engine...</p>
+        </div>
+      </DashboardShell>
+    )
+  }
+
   return (
     <DashboardShell title="Analytics" subtitle="Deep dive into review trends and sentiment patterns">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -52,7 +61,7 @@ export default function AnalyticsPage() {
         <div className="glass rounded-xl p-6">
           <h3 className="mb-4 text-sm font-medium text-muted-foreground">Monthly Review Volume</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={monthlyData}>
+            <BarChart data={data.monthlyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 260)" />
               <XAxis dataKey="month" tick={{ fill: "oklch(0.6 0 0)", fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "oklch(0.6 0 0)", fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -67,7 +76,7 @@ export default function AnalyticsPage() {
         <div className="glass rounded-xl p-6">
           <h3 className="mb-4 text-sm font-medium text-muted-foreground">Weekly Sentiment Score</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={sentimentData}>
+            <LineChart data={data.sentimentData}>
               <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 260)" />
               <XAxis dataKey="day" tick={{ fill: "oklch(0.6 0 0)", fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis domain={[60, 90]} tick={{ fill: "oklch(0.6 0 0)", fontSize: 12 }} axisLine={false} tickLine={false} />
@@ -83,15 +92,15 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-8">
             <ResponsiveContainer width={180} height={180}>
               <PieChart>
-                <Pie data={platformData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
-                  {platformData.map((entry, i) => (
+                <Pie data={data.platformData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value">
+                  {data.platformData.map((entry: any, i: number) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
             <div className="space-y-3">
-              {platformData.map((p) => (
+              {data.platformData.map((p: any) => (
                 <div key={p.name} className="flex items-center gap-3">
                   <div className="h-3 w-3 rounded-full" style={{ background: p.color }} />
                   <div>
@@ -108,14 +117,7 @@ export default function AnalyticsPage() {
         <div className="glass rounded-xl p-6">
           <h3 className="mb-4 text-sm font-medium text-muted-foreground">Top NLP Categories</h3>
           <div className="space-y-3">
-            {[
-              { tag: "Food Quality", count: 847, pct: 94 },
-              { tag: "Wait Time", count: 612, pct: 78 },
-              { tag: "Staff Behavior", count: 534, pct: 68 },
-              { tag: "Ambience", count: 489, pct: 62 },
-              { tag: "Pricing", count: 387, pct: 49 },
-              { tag: "Hygiene", count: 312, pct: 40 },
-            ].map((item) => (
+            {data.topTags.map((item: any) => (
               <div key={item.tag} className="flex items-center gap-3">
                 <span className="w-28 text-sm text-foreground">{item.tag}</span>
                 <div className="flex-1">

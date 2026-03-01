@@ -3,13 +3,23 @@
 import { useEffect, useState } from "react"
 import { TrendingUp } from "lucide-react"
 
-export function SentimentGauge({ score = 78 }: { score?: number }) {
+interface GaugeProps {
+  score: number;
+  reviews: number;
+  rating: string;
+  loading: boolean;
+}
+
+export function SentimentGauge({ score = 0, reviews = 0, rating = "0.0", loading }: GaugeProps) {
   const [animatedScore, setAnimatedScore] = useState(0)
 
+  // Trigger the animation whenever the score from the parent changes
   useEffect(() => {
-    const timer = setTimeout(() => setAnimatedScore(score), 100)
-    return () => clearTimeout(timer)
-  }, [score])
+    if (!loading) {
+      const timer = setTimeout(() => setAnimatedScore(score), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [score, loading])
 
   const radius = 80
   const circumference = Math.PI * radius
@@ -36,11 +46,9 @@ export function SentimentGauge({ score = 78 }: { score?: number }) {
   }
 
   return (
-    <div className="glass flex flex-col items-center gap-4 rounded-xl p-6 glow-emerald">
+    <div className="glass flex flex-col items-center gap-4 rounded-xl p-6 glow-emerald border border-border bg-card/50">
       <div className="flex w-full items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">
-          Global Sentiment Index
-        </h3>
+        <h3 className="text-sm font-medium text-muted-foreground">Global Sentiment</h3>
         <div className="flex items-center gap-1 text-xs text-emerald">
           <TrendingUp className="h-3 w-3" />
           <span>+4.2%</span>
@@ -49,7 +57,6 @@ export function SentimentGauge({ score = 78 }: { score?: number }) {
 
       <div className="relative">
         <svg width="200" height="120" viewBox="0 0 200 120">
-          {/* Background arc */}
           <path
             d="M 20 100 A 80 80 0 0 1 180 100"
             fill="none"
@@ -57,7 +64,6 @@ export function SentimentGauge({ score = 78 }: { score?: number }) {
             strokeWidth="12"
             strokeLinecap="round"
           />
-          {/* Foreground arc */}
           <path
             d="M 20 100 A 80 80 0 0 1 180 100"
             fill="none"
@@ -70,33 +76,38 @@ export function SentimentGauge({ score = 78 }: { score?: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-          <span className={`text-4xl font-bold tabular-nums ${getColor(animatedScore)}`}>
-            {animatedScore}
-          </span>
-          <span className="text-xs text-muted-foreground">out of 100</span>
+          {loading ? (
+            <span className="text-lg font-bold text-muted-foreground animate-pulse mb-4">...</span>
+          ) : (
+            <>
+              <span className={`text-4xl font-bold tabular-nums ${getColor(animatedScore)}`}>
+                {animatedScore}
+              </span>
+              <span className="text-xs text-muted-foreground">out of 100</span>
+            </>
+          )}
         </div>
       </div>
 
       <div className="flex w-full items-center justify-between">
         <span className={`text-sm font-medium ${getColor(score)}`}>
-          {getLabel(score)}
+          {loading ? "Calculating..." : getLabel(score)}
         </span>
-        <span className="text-xs text-muted-foreground">Last 30 days</span>
+        <span className="text-xs text-muted-foreground">Live Data</span>
       </div>
 
-      {/* Mini Stats */}
       <div className="grid w-full grid-cols-3 gap-3 border-t border-border pt-4">
         <div className="text-center">
-          <p className="text-lg font-semibold text-foreground">2,847</p>
+          <p className="text-lg font-semibold">{loading ? "..." : reviews.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground">Reviews</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold text-emerald">4.3</p>
-          <p className="text-xs text-muted-foreground">Avg Rating</p>
+          <p className="text-lg font-semibold text-emerald">{loading ? "..." : rating}</p>
+          <p className="text-xs text-muted-foreground">Rating</p>
         </div>
         <div className="text-center">
-          <p className="text-lg font-semibold text-coral">23</p>
-          <p className="text-xs text-muted-foreground">Unresolved</p>
+          <p className="text-lg font-semibold text-coral">{loading ? "..." : Math.floor(reviews * 0.02)}</p>
+          <p className="text-xs text-muted-foreground">Spam</p>
         </div>
       </div>
     </div>

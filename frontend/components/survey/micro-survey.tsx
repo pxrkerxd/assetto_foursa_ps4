@@ -47,11 +47,35 @@ export function MicroSurvey() {
     }, 400)
   }, [])
 
-  const handleSubmitFeedback = useCallback(() => {
-    setStep("reward")
-    setShowConfetti(true)
-    setTimeout(() => setShowConfetti(false), 2000)
-  }, [])
+  const handleSubmitFeedback = useCallback(async () => {
+  try {
+    // 1. Send the actual data to your backend
+    const response = await fetch('http://localhost:5000/api/reviews/direct', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        author: "Judge Demo",
+        platform: "Micro-Survey",
+        rating: rating,
+        text: `Feedback topics: ${selectedFeedback.join(", ")}`, 
+        branch: "Navi Mumbai" // Hardcoded for the demo
+      }),
+    });
+
+    // 2. ONLY show the reward if the server actually saved it
+    if (response.ok) {
+      setStep("reward");
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 2000);
+    } else {
+      console.error("Backend refused to save the review");
+    }
+  } catch (error) {
+    console.error("Failed to reach backend:", error);
+  }
+}, [rating, selectedFeedback]);
 
   const handleReset = useCallback(() => {
     setStep("rating")

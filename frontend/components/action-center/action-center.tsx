@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Star,
   AlertTriangle,
@@ -18,9 +18,9 @@ type ReviewStatus = "open" | "in-progress" | "resolved"
 type Priority = "red" | "yellow" | "green"
 
 interface Review {
-  id: number
+  id: string
   author: string
-  platform: "Google" | "Zomato"
+  platform: string
   rating: number
   text: string
   branch: string
@@ -28,78 +28,6 @@ interface Review {
   status: ReviewStatus
   priority: Priority
   tags: string[]
-}
-
-const reviews: Review[] = [
-  {
-    id: 1,
-    author: "Vikram D.",
-    platform: "Zomato",
-    rating: 1,
-    text: "Very disappointing experience. Waited 50 minutes for our order and when it arrived, two dishes were wrong. The staff was unapologetic and the manager was nowhere to be found. Will not be coming back.",
-    branch: "T. Nagar, Chennai",
-    time: "2 hours ago",
-    status: "open",
-    priority: "red",
-    tags: ["#WaitTime", "#OrderAccuracy", "#StaffBehavior"],
-  },
-  {
-    id: 2,
-    author: "Meera P.",
-    platform: "Google",
-    rating: 2,
-    text: "Food quality has gone down significantly. The paneer was rubber-like and the naan was stale. Only saving grace was the dal makhani. Very overpriced for what you get.",
-    branch: "Connaught Place, Delhi",
-    time: "5 hours ago",
-    status: "open",
-    priority: "red",
-    tags: ["#FoodQuality", "#Pricing"],
-  },
-  {
-    id: 3,
-    author: "Rohit S.",
-    platform: "Zomato",
-    rating: 3,
-    text: "Decent experience overall. The food was good but the air conditioning was not working properly. A bit warm inside. Service was okay, nothing exceptional.",
-    branch: "Salt Lake, Kolkata",
-    time: "8 hours ago",
-    status: "in-progress",
-    priority: "yellow",
-    tags: ["#Ambience", "#StaffBehavior"],
-  },
-  {
-    id: 4,
-    author: "Priya S.",
-    platform: "Google",
-    rating: 5,
-    text: "Amazing food and great ambience! Rahul was very attentive and made our anniversary special. The dessert platter was outstanding. Will definitely come back!",
-    branch: "Koramangala, Bangalore",
-    time: "12 hours ago",
-    status: "resolved",
-    priority: "green",
-    tags: ["#FoodQuality", "#StaffBehavior", "#Ambience"],
-  },
-  {
-    id: 5,
-    author: "Karthik N.",
-    platform: "Google",
-    rating: 2,
-    text: "Parking situation is terrible. Took 20 minutes to find a spot. The valet was nowhere in sight. Food was average at best. Not worth the hassle on weekends.",
-    branch: "Jubilee Hills, Hyderabad",
-    time: "1 day ago",
-    status: "open",
-    priority: "red",
-    tags: ["#Parking", "#FoodQuality"],
-  },
-]
-
-const aiReplies = {
-  Professional:
-    "Thank you for taking the time to share your feedback. We sincerely apologize for the inconvenience you experienced. Your concerns have been noted and escalated to our operations team. We would love the opportunity to make this right. Please reach out to us directly so we can resolve this.",
-  Apologetic:
-    "We are truly sorry about your experience. This is not the standard we strive for and we deeply regret falling short. We are investigating the issues you raised and will take immediate corrective action. We hope you'll give us another chance to serve you better.",
-  Enthusiastic:
-    "Thank you so much for your visit and for taking the time to write to us! We hear you and we're already working on improving. Your feedback is invaluable in helping us get better every day. We'd love to welcome you back soon!",
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -151,11 +79,18 @@ function StatusBadge({ status }: { status: ReviewStatus }) {
   )
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({ review, onStatusChange }: { review: Review, onStatusChange: (id: string, status: ReviewStatus) => void }) {
   const [expanded, setExpanded] = useState(review.priority === "red" && review.status === "open")
-  const [selectedTone, setSelectedTone] = useState<keyof typeof aiReplies | null>(null)
+  const [selectedTone, setSelectedTone] = useState<string | null>(null)
   const [isResolved, setIsResolved] = useState(review.status === "resolved")
   const [copied, setCopied] = useState(false)
+
+  // Dynamic AI Replies that use the actual review data!
+  const aiReplies: Record<string, string> = {
+    Professional: `Dear ${review.author}, thank you for sharing your feedback about your visit to our ${review.branch} branch. We have noted your comments and our operations team is reviewing this to ensure better experiences in the future.`,
+    Apologetic: `Hi ${review.author}, we are truly sorry about your experience. A rating of ${review.rating} stars is not our standard. We are investigating the issues you raised and will take immediate corrective action. Please reach out to us directly.`,
+    Enthusiastic: `Thank you so much for the ${review.rating}-star review, ${review.author}! We are thrilled you had a great time at ${review.branch}. Your feedback is invaluable in helping us get better every day. We'd love to welcome you back soon!`,
+  }
 
   const handleCopy = () => {
     if (selectedTone) {
@@ -163,6 +98,12 @@ function ReviewCard({ review }: { review: Review }) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  const handleResolveToggle = () => {
+    const newStatus = isResolved ? "open" : "resolved"
+    setIsResolved(!isResolved)
+    onStatusChange(review.id, newStatus)
   }
 
   return (
@@ -187,7 +128,9 @@ function ReviewCard({ review }: { review: Review }) {
                 "rounded px-1.5 py-0.5 text-[10px] font-medium",
                 review.platform === "Google"
                   ? "bg-emerald/10 text-emerald"
-                  : "bg-coral/10 text-coral"
+                  : review.platform === "Zomato"
+                  ? "bg-coral/10 text-coral"
+                  : "bg-primary/10 text-primary"
               )}
             >
               {review.platform}
@@ -233,7 +176,7 @@ function ReviewCard({ review }: { review: Review }) {
               AI-Assisted Replies
             </p>
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(aiReplies) as (keyof typeof aiReplies)[]).map((tone) => (
+              {Object.keys(aiReplies).map((tone) => (
                 <button
                   key={tone}
                   onClick={() => setSelectedTone(selectedTone === tone ? null : tone)}
@@ -277,7 +220,7 @@ function ReviewCard({ review }: { review: Review }) {
           <div className="flex items-center justify-between rounded-lg bg-secondary/30 px-4 py-3">
             <span className="text-sm font-medium text-foreground">Mark as Resolved</span>
             <button
-              onClick={() => setIsResolved(!isResolved)}
+              onClick={handleResolveToggle}
               className={cn(
                 "relative h-6 w-11 rounded-full transition-colors",
                 isResolved ? "bg-emerald" : "bg-muted-foreground/30"
@@ -298,10 +241,70 @@ function ReviewCard({ review }: { review: Review }) {
 }
 
 export function ActionCenter() {
+  const [reviews, setReviews] = useState<Review[]>([])
   const [filter, setFilter] = useState<"all" | ReviewStatus>("all")
+  const [loading, setLoading] = useState(true)
 
-  const filteredReviews =
-    filter === "all" ? reviews : reviews.filter((r) => r.status === filter)
+  // Fetch real data and map it for the Action Center
+  useEffect(() => {
+    const fetchActionData = async () => {
+      try {
+        // Fetching from your existing dashboard route to get the reviews
+        const response = await fetch('http://localhost:5000/api/dashboard-data')
+        const data = await response.json()
+        const fetchedReviews = data.recentReviews || []
+
+        // Map database reviews into the Action Center format
+        const mappedReviews = fetchedReviews.map((r: any) => {
+          let priority: Priority = "green"
+          let status: ReviewStatus = "resolved"
+          
+          if ((r.rating || 5) <= 2) { 
+            priority = "red" 
+            status = "open" 
+          } else if (r.rating === 3) { 
+            priority = "yellow" 
+            status = "in-progress" 
+          }
+
+          // Generate some quick tags based on the text
+          let tags = []
+          const txt = (r.text || r.content || "").toLowerCase()
+          if (txt.includes("food") || txt.includes("taste")) tags.push("#FoodQuality")
+          if (txt.includes("wait") || txt.includes("slow")) tags.push("#WaitTime")
+          if (txt.includes("staff") || txt.includes("rude")) tags.push("#StaffBehavior")
+          if (tags.length === 0) tags.push("#GeneralFeedback")
+
+          return {
+            id: r._id,
+            author: r.author || "Anonymous Customer",
+            platform: r.platform || "Direct",
+            rating: r.rating || 5,
+            text: r.text || r.content || "",
+            branch: r.branch || "General Branch",
+            time: r.time || "Recently",
+            status: status,
+            priority: priority,
+            tags: tags
+          }
+        })
+
+        setReviews(mappedReviews)
+        setLoading(false)
+      } catch (error) {
+        console.error("Error fetching action center data:", error)
+        setLoading(false)
+      }
+    }
+    fetchActionData()
+  }, [])
+
+  // Update status locally so the top filters update when you hit the toggle
+  const updateReviewStatus = (id: string, newStatus: ReviewStatus) => {
+    setReviews(reviews.map(r => r.id === id ? { ...r, status: newStatus } : r))
+  }
+
+  const filteredReviews = filter === "all" ? reviews : reviews.filter((r) => r.status === filter)
 
   const counts = {
     all: reviews.length,
@@ -339,9 +342,19 @@ export function ActionCenter() {
 
       {/* Review List */}
       <div className="space-y-3">
-        {filteredReviews.map((review) => (
-          <ReviewCard key={review.id} review={review} />
-        ))}
+        {loading ? (
+          <p className="text-sm text-muted-foreground animate-pulse">Loading Action Center...</p>
+        ) : filteredReviews.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No reviews match this filter.</p>
+        ) : (
+          filteredReviews.map((review) => (
+            <ReviewCard 
+              key={review.id} 
+              review={review} 
+              onStatusChange={updateReviewStatus}
+            />
+          ))
+        )}
       </div>
     </div>
   )
